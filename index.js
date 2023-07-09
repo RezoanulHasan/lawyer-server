@@ -108,42 +108,127 @@ const client = new MongoClient(uri, {
       // Connect the client to the server	(optional starting in v4.7)
       //await client.connect();
   
-  //mongodb databage
+  //mongodb Database
   const contactCollection = client.db('lawyerHaring').collection('contacts');
   const usersCollection = client.db("lawyerHaring").collection("users");
+  const lawyerCollection = client.db("lawyerHaring").collection("lawyer");
+  
 
-     //*---------------------------using jwt--------------------------*
+//*---------------------------using jwt--------------------------*
 
-     app.post('/jwt', (req, res) => {
-        const user = req.body;
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '7d' })
-        res.send({ token })
+ app.post('/jwt', (req, res) => {
+const user = req.body;
+const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: '7d' })
+res.send({ token })
+})
+  // Warning: use verifyJWT before using ( verifyAdmin)
+const verifyAdmin = async (req, res, next) => {
+const email = req.decoded.email;
+const query = { email: email }
+const user = await usersCollection.findOne(query);
+if (user?.role !== 'admin') {
+return res.status(403).send({ error: true, message: 'forbidden message' });
+}
+next();         
+
+
+}
+
+
+
+//*---------------------------Lawyers info--------------------------*
+
+// SHOW lawyers-inFormation  data by login user
+app.get('/lawyers',  async (req, res) => {
+//console.log(req.query.email);
+       let query = {};
+      if (req.query?.email) {
+      query = { email: req.query.email }
+      }
+      const result = await lawyerCollection.find(query).toArray();
+      res.send(result);
       })
-           // Warning: use verifyJWT before using ( verifyAdmin)
-           const verifyAdmin = async (req, res, next) => {
-            const email = req.decoded.email;
-            const query = { email: email }
-            const user = await usersCollection.findOne(query);
-            if (user?.role !== 'admin') {
-              return res.status(403).send({ error: true, message: 'forbidden message' });
-            }
-            next();
 
-  }
+//SHOW lawyers DATA  IN SERVER SITE  BY ID  
+    app.get('/lawyers/:id',  async(req, res) => {
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)}
+        const result = await lawyerCollection.findOne(query);
+        res.send(result);
+    })
+
+
+//get lawyers data  from  client side
+    app.post('/lawyers', async (req, res) => {
+        const newLawyer= req.body;
+        console.log(newLawyer);
+        const result = await  lawyerCollection.insertOne(newLawyer);
+        res.send(result);
+    })
+	
+
+
+// update lawyers status
+    app.patch('/lawyers/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedLawyer = req.body;
+      console.log(updatedLawyer);
+      const updateDoc = {
+          $set: {
+              status:  updatedLawyer.status
+          },
+      };
+      const result = await lawyerCollection.updateOne(filter, updateDoc);
+      res.send(result);
+  })
+
+
+
+// lawyers UPDATE  alldata
+    app.put('/lawyers/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = { upsert: true };
+      const updatenewLawyer = req.body;
+      const  newLawyer= {
+          $set: {
+              name: updateNewClass.name, 
+              quantity: updateNewClass.quantity, 
+              price: updateNewClass.price, 
+              rating: updateNewClass.rating, 
+              category: updateProduct.category, 
+              details: updateNewClass.details, 
+              photo: updateNewClass.photo
+          }
+      }
+      const result = await lawyerCollection.updateOne(filter, newLawyer, options);
+      res.send(result);
+  })
+
+//lawyers delete  data
+  app.delete('/lawyers/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await  lawyerCollection.deleteOne(query);
+      res.send(result);
+  })
+
+
+
+
 
 
 
 
 //*---------------------------users--------------------------*
 // Get all users
-app.get('/users',verifyJWT, verifyAdmin, async (req, res) => {
+app.get('/users', async (req, res) => {
     const result = await usersCollection.find().toArray();
     res.send(result);
   });
   
-  
-  
-  // Register a new user
+ // Register a new user
   app.post('/users', async (req, res) => {
     const user = req.body;
     const query = { email: user.email };
@@ -192,18 +277,18 @@ app.get('/users',verifyJWT, verifyAdmin, async (req, res) => {
   app.get('/users/lawyer/:email', verifyJWT, async (req, res) => {
     const email = req.params.email;
     if (req.decoded.email !== email) {
-      res.send({ instructor: false });
+      res.send({ lawyer: false });
     }
   // email cheak
     const query = { email: email };
     const user = await usersCollection.findOne(query);
       // check instructor
-    const result = { instructor: user?.role === 'lawyer' };
+    const result = { lawyer: user?.role === 'lawyer' };
     res.send(result);
   });
   
   // Promote a user to instructor
-  app.patch('/users/instructor/:id', async (req, res) => {
+  app.patch('/users/lawyer/:id', async (req, res) => {
     const id = req.params.id;
     const filter = { _id: new ObjectId(id) };
     const updateDoc = {
@@ -213,6 +298,15 @@ app.get('/users',verifyJWT, verifyAdmin, async (req, res) => {
     };
     const result = await usersCollection.updateOne(filter, updateDoc);
     res.send(result);
+  });
+
+
+  app.get('/users/:id', async(req, res) => {
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await usersCollection.findOne(query);
+    res.send(result);
+  
   });
   
   // Delete a user
