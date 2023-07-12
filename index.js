@@ -112,7 +112,8 @@ const client = new MongoClient(uri, {
   const contactCollection = client.db('lawyerHaring').collection('contacts');
   const usersCollection = client.db("lawyerHaring").collection("users");
   const lawyerCollection = client.db("lawyerHaring").collection("lawyer");
-  
+  const serviceCollection = client.db("lawyerHaring").collection("services");
+
 
 //*---------------------------using jwt--------------------------*
 
@@ -136,6 +137,7 @@ next();
 
 
 
+
 //*---------------------------Lawyers info--------------------------*
 
 // SHOW lawyers-inFormation  data by login user
@@ -149,6 +151,8 @@ app.get('/lawyers',  async (req, res) => {
       res.send(result);
       })
 
+
+  
 //SHOW lawyers DATA  IN SERVER SITE  BY ID  
     app.get('/lawyers/:id',  async(req, res) => {
         const id = req.params.id;
@@ -160,7 +164,7 @@ app.get('/lawyers',  async (req, res) => {
 
 //get lawyers data  from  client side
     app.post('/lawyers', async (req, res) => {
-        const newLawyer= req.body;
+        const newLawyer = req.body;
         console.log(newLawyer);
         const result = await  lawyerCollection.insertOne(newLawyer);
         res.send(result);
@@ -190,15 +194,13 @@ app.get('/lawyers',  async (req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)}
       const options = { upsert: true };
-      const updatenewLawyer = req.body;
+      const updateNewLawyer = req.body;
       const  newLawyer= {
-          $set: {
-              name: updateNewClass.name, 
-              quantity: updateNewClass.quantity, 
-              price: updateNewClass.price, 
-              rating: updateNewClass.rating, 
-              category: updateProduct.category, 
-              details: updateNewClass.details, 
+          $set: { 
+              price: updateNewLawyer.price, 
+              time: updateNewLawyer.rating, 
+              category:updateNewLawyer.category, 
+              details: updateNewLawyer.details, 
               photo: updateNewClass.photo
           }
       }
@@ -216,6 +218,50 @@ app.get('/lawyers',  async (req, res) => {
 
 
 
+//*---------------------------services info--------------------------*
+
+// SHOW services info  data by login user
+app.get('/services',  async (req, res) => {
+  //console.log(req.query.email);
+         let query = {};
+        if (req.query?.email) {
+        query = { email: req.query.email }
+        }
+        const result = await serviceCollection.find(query).toArray();
+        res.send(result);
+        })
+  
+  
+    
+  //SHOW services info IN SERVER SITE  BY ID  
+      app.get('/services/:id', async(req, res) => {
+          const id = req.params.id;
+          const query = {_id: new ObjectId(id)}
+          const result = await serviceCollection.findOne(query);
+          res.send(result);
+      })
+  
+  
+  //get  services info from  client side
+      app.post('/services', async (req, res) => {
+          const newService = req.body;
+          console.log(newService);
+          const result = await  serviceCollection.insertOne(newService);
+          res.send(result);
+      })
+    
+  
+
+  
+  //delet services info data
+    app.delete('/services/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) }
+        const result = await  serviceCollection.deleteOne(query);
+        res.send(result);
+    })
+  
+  
 
 
 
