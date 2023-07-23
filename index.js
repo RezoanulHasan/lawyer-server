@@ -38,37 +38,48 @@ const sendMail = (emailData, emailAddress) => {
         console.log('Server is ready to take our messages')
       }
     })
-  
+
     const mailOptions = {
       from: process.env.EMAIL,
       to: emailAddress,
       subject: emailData?.subject,
-      html:    `
-      <div>
-      <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-      <div className="w-12 rounded-full">
-       <img src="" alt="" />
-      </div>
-    </label>
-     <h2> Dear Customer  </h2>
+      html: `
+        <div>
+          <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+            <div className="w-12 rounded-full">
+              <img src="https://i.ibb.co/Tv1gdSN/header.png" alt="" />
+            </div>
+          </label>
+          <h2> Dear Customer - ${emailData?.username}</h2>
+          <h3> Congratulations! Your booking has been successfully processed</h3>
+          <p>
+            <strong>Booking Details:</strong><br />
+           Lawyer Name: ${emailData?.name}<br />
+            Time: ${emailData?.time}<br />
+            Category: ${emailData?.category}<br />
+            Price: ${emailData?.price}<br />
+          </p>
+          
+        <h2> Thanks,for connecting us</h2>
+        <br>
+        <h3>
+        Rezoanul Hasan<br/>
+        Phone:01734639066<br/> 
+        Lawyer Haring Admin<br/>
+         </h3>
+        </div>
+      `,
+    };
   
-  <h3> Congratulations! Your payment has been successfully processed, securing your spot at Sports Academy. Prepare to embark on a transformation sports journey that will unlock your full potential!</h3>
-  
-      </div> 
-  
-      `     , 
-    }
-
     transporter.sendMail(mailOptions, function (error, info) {
       if (error) {
-        console.log(error)
+        console.log(error);
       } else {
-        console.log('Email sent: ' + info.response)
+        console.log('Email sent: ' + info.response);
       }
-    })
-  }
-
-
+    });
+  };
+   
    //(verifyJWT)
 const verifyJWT = (req, res, next) => {
     const authorization = req.headers.authorization;
@@ -113,7 +124,7 @@ const client = new MongoClient(uri, {
   const usersCollection = client.db("lawyerHaring").collection("users");
   const lawyerCollection = client.db("lawyerHaring").collection("lawyer");
   const serviceCollection = client.db("lawyerHaring").collection("services");
-
+  const bookingCollection = client.db("lawyerHaring").collection("bookings");
 
 //*---------------------------using jwt--------------------------*
 
@@ -188,7 +199,6 @@ app.get('/lawyers',  async (req, res) => {
   })
 
 
-
 // lawyers UPDATE  alldata
     app.put('/lawyers/:id', async(req, res) => {
       const id = req.params.id;
@@ -201,7 +211,7 @@ app.get('/lawyers',  async (req, res) => {
               time: updateNewLawyer.rating, 
               category:updateNewLawyer.category, 
               details: updateNewLawyer.details, 
-              photo: updateNewClass.photo
+              photo:  updateNewLawyer.photo
           }
       }
       const result = await lawyerCollection.updateOne(filter, newLawyer, options);
@@ -269,10 +279,23 @@ app.get('/services',  async (req, res) => {
 
 //*---------------------------users--------------------------*
 // Get all users
-app.get('/users', async (req, res) => {
+app.get('/users',verifyJWT,  async (req, res) => {
     const result = await usersCollection.find().toArray();
     res.send(result);
   });
+
+
+  app.get('/users',  async (req, res) => {
+    //console.log(req.query.email);
+           let query = {};
+          if (req.query?.email) {
+          query = { email: req.query.email }
+          }
+          const result = await usersCollection.find(query).toArray();
+          res.send(result);
+          })
+    
+
   
  // Register a new user
   app.post('/users', async (req, res) => {
@@ -363,6 +386,81 @@ app.get('/users', async (req, res) => {
     res.send(result);
   });
   
+
+
+
+
+
+//*---------------------------bookings--------------------------*
+
+// POST route to receive data for booking from the client
+app.post('/bookings', async (req, res) => {
+  const booking = req.body;
+  console.log(booking);
+
+  try {
+    const result = await bookingCollection.insertOne(booking);
+    res.json(result);
+
+    // Send email to the user after successful booking
+    const { userEmail, name, time, category, price, photo,username} = booking;
+    const emailData = {
+      subject: 'Booking Confirmation',
+      name,
+      time,
+      category,
+      price,
+      photo,
+      username,
+    };
+    sendMail(emailData, userEmail);
+  } catch (error) {
+    console.error('Error inserting booking:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+
+ //SHOW  bookings DATA   IN SERVER SITE 
+ app.get('/bookings', async( req, res) => {
+  const cursor = bookingCollection.find();
+  const result = await cursor.toArray();
+  res.send(result);
+})
+
+ // SHOW product by login user
+ app.get('/bookings', async (req, res) => {
+  //console.log(req.query.email);
+  let query = {};
+  if (req.query?.email) {
+      query = { email: req.query.email }
+  }
+  const result = await bookingCollection.find(query).toArray();
+  res.send(result);
+})
+
+
+
+//SHOW  bookings DATA   IN SERVER SITE  BY ID  
+app.get('/bookings/:id', async(req, res) => {
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const result = await bookingCollection.findOne(query);
+  res.send(result);
+})
+
+		
+//bookings  delete  data one by one 
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await  bookingCollection.deleteOne(query);
+            res.send(result);
+        })
+
+
+
+
 
 
 
