@@ -57,15 +57,15 @@ const sendMail = (emailData, emailAddress) => {
            Lawyer Name: ${emailData?.name}<br />
             Time: ${emailData?.time}<br />
             Category: ${emailData?.category}<br />
-            Price: ${emailData?.price}<br />
+            Price: ${emailData?.price} /Tk-only<br />
           </p>
           
         <h2> Thanks,for connecting us</h2>
         <br>
         <h3>
         Rezoanul Hasan<br/>
-        Phone:01734639066<br/> 
-        Lawyer Haring Admin<br/>
+        Phone:+8801734639066<br/> 
+        Lawyer Haring ,Admin<br/>
          </h3>
         </div>
       `,
@@ -204,17 +204,18 @@ app.get('/lawyers',  async (req, res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)}
       const options = { upsert: true };
-      const updateNewLawyer = req.body;
-      const  newLawyer= {
+      const updateLawyer = req.body;
+      const  Lawyer= {
           $set: { 
-              price: updateNewLawyer.price, 
-              time: updateNewLawyer.rating, 
-              category:updateNewLawyer.category, 
-              details: updateNewLawyer.details, 
-              photo:  updateNewLawyer.photo
+              name: updateLawyer.name,     
+              price: updateLawyer.price, 
+              time: updateLawyer.time, 
+              category:updateLawyer.category, 
+              details: updateLawyer.details, 
+              experience:updateLawyer.experience,
           }
       }
-      const result = await lawyerCollection.updateOne(filter, newLawyer, options);
+      const result = await lawyerCollection.updateOne(filter, Lawyer, options);
       res.send(result);
   })
 
