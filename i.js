@@ -400,11 +400,11 @@ app.post('/bookings', async (req, res) => {
 
 
  //SHOW  bookings DATA   IN SERVER SITE 
- //app.get('/bookings', async( req, res) => {
- //const cursor = bookingCollection.find();
-  //const result = await cursor.toArray();
-  //res.send(result);
-//})
+ app.get('/bookings', async( req, res) => {
+  const cursor = bookingCollection.find();
+  const result = await cursor.toArray();
+  res.send(result);
+})
 
  // SHOW product by login user
  app.get('/bookings', async (req, res) => {
