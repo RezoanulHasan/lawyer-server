@@ -368,117 +368,128 @@ app.get('/users',verifyJWT,  async (req, res) => {
   });
   
 
-
 //*---------------------------bookings--------------------------*
 
 // POST route to receive data for booking from the client
 app.post('/bookings', async (req, res) => {
-  const booking = req.body;
-  console.log(booking);
+    const booking = req.body;
+    console.log(booking);
+  
+    try {
+      const result = await bookingCollection.insertOne(booking);
+      res.json(result);
+  
+      // Send email to the user after successful booking
+      const { userEmail, name, time, category, price, photo,username} = booking;
+      const emailData = {
+        subject: 'Booking Confirmation',
+        name,
+        time,
+        category,
+        price,
+        photo,
+        username,
+      };
+      sendMail(emailData, userEmail);
+    } catch (error) {
+      console.error('Error inserting booking:', error);
+      res.status(500).json({ error: 'Internal server error.' });
+    }
+  });
 
-  try {
-    const result = await bookingCollection.insertOne(booking);
-    res.json(result);
 
-    // Send email to the user after successful booking
-    const { userEmail, name, time, category, price, photo,username} = booking;
-    const emailData = {
-      subject: 'Booking Confirmation',
-      name,
-      time,
-      category,
-      price,
-      photo,
-      username,
-    };
-    sendMail(emailData, userEmail);
-  } catch (error) {
-    console.error('Error inserting booking:', error);
-    res.status(500).json({ error: 'Internal server error.' });
-  }
-});
+
 
 
  //SHOW  bookings DATA   IN SERVER SITE 
- //app.get('/bookings', async( req, res) => {
- //const cursor = bookingCollection.find();
-  //const result = await cursor.toArray();
-  //res.send(result);
-//})
-
- // SHOW product by login user
- app.get('/bookings', async (req, res) => {
-  //console.log(req.query.email);
-  let query = {};
-  if (req.query?.email) {
-      query = { email: req.query.email }
-  }
-  const result = await bookingCollection.find(query).toArray();
+ app.get('/bookings', async( req, res) => {
+ const cursor = bookingCollection.find();
+  const result = await cursor.toArray();
   res.send(result);
 })
+
+
+
+
+
+
+  app.get('/bookings', async (req, res) => {
+    //console.log(req.query.email);
+    let query = {};
+    if (req.query?.email) {
+        query = { email: req.query.email }
+    }
+    const result = await bookingCollection.find(query).toArray();
+    res.send(result);
+  })
+
+
+
+
+  
 
 
 
 //SHOW  bookings DATA   IN SERVER SITE  BY ID  
 app.get('/bookings/:id', async(req, res) => {
-  const id = req.params.id;
-  const query = {_id: new ObjectId(id)}
-  const result = await bookingCollection.findOne(query);
-  res.send(result);
-})
-
-		
-//bookings  delete  data one by one 
-        app.delete('/bookings/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await  bookingCollection.deleteOne(query);
-            res.send(result);
-        })
-
-
-   //*---------------------------contacts--------------------------*
-
-    //get data contacts  from  client
-    app.post('/contacts', async( req, res) => {
-        const contact = req.body;
-        console.log(contact);
-        const result = await contactCollection.insertOne(contact);
+    const id = req.params.id;
+    const query = {_id: new ObjectId(id)}
+    const result = await bookingCollection.findOne(query);
+    res.send(result);
+  })
+  
+          
+  //bookings  delete  data one by one 
+          app.delete('/bookings/:id', async (req, res) => {
+              const id = req.params.id;
+              const query = { _id: new ObjectId(id) }
+              const result = await  bookingCollection.deleteOne(query);
+              res.send(result);
+          })
+  
+  
+     //*---------------------------contacts--------------------------*
+  
+      //get data contacts  from  client
+      app.post('/contacts', async( req, res) => {
+          const contact = req.body;
+          console.log(contact);
+          const result = await contactCollection.insertOne(contact);
+          res.send(result);
+      })
+      
+      
+    
+      //SHOW contacts  allDATA   IN SERVER SITE 
+      app.get('/contacts', async( req, res) => {
+        const cursor = contactCollection.find();
+            const result = await cursor.toArray();
         res.send(result);
     })
     
-    
-  
-    //SHOW contacts  allDATA   IN SERVER SITE 
-    app.get('/contacts', async( req, res) => {
-      const cursor = contactCollection.find();
-          const result = await cursor.toArray();
+    //SHOW contacts  DATA   IN SERVER SITE  BY ID  
+    app.get('/contacts/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await contactCollection.findOne(query);
       res.send(result);
-  })
+    
+    
+    })  
   
-  //SHOW contacts  DATA   IN SERVER SITE  BY ID  
-  app.get('/contacts/:id', async(req, res) => {
-    const id = req.params.id;
-    const query = {_id: new ObjectId(id)}
-    const result = await contactCollection.findOne(query);
-    res.send(result);
-  
-  
-  })  
-
-           // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    //await client.close();
+             // Send a ping to confirm a successful connection
+      await client.db("admin").command({ ping: 1 });
+      console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    } finally {
+      // Ensures that the client will close when you finish/error
+      //await client.close();
+    }
   }
-}
-run().catch(console.dir);app.get('/', (req, res) => {
-    res.send('!welcome to LawyerHiring')
-  })
-  
-  
-  app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-  })
+  run().catch(console.dir);app.get('/', (req, res) => {
+      res.send('!welcome to LawyerHiring')
+    })
+    
+    
+    app.listen(port, () => {
+      console.log(`Example app listening on port ${port}`)
+    })
